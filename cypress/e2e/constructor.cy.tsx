@@ -2,14 +2,23 @@ import tokens from '../fixtures/token.json';
 import order from '../fixtures/order.json';
 import { setCookie, deleteCookie } from '../../src/utils/cookie';
 
+const selectors = {
+  bunsTop: `[data-cy='bunsTop']`,
+  constructorItems: `[data-cy='constructorItems']`,
+  bunsBottom: `[data-cy='bunsBottom']`,
+  orderButton: `[data-cy='orderButton']`,
+  modal: `[data-cy='modal']`,
+  overlay: `[data-cy='overlay']`,
+};
+
 const verifyIngredients = (
   topBun: string,
   middleMain: string,
   bottomBun: string
 ) => {
-  cy.get(`[data-cy='bunsTop']`).should('contain', topBun);
-  cy.get(`[data-cy='constructorItems']`).should('contain', middleMain);
-  cy.get(`[data-cy='bunsBottom']`).should('contain', bottomBun);
+  cy.get(selectors.bunsTop).should('contain', topBun);
+  cy.get(selectors.constructorItems).should('contain', middleMain);
+  cy.get(selectors.bunsBottom).should('contain', bottomBun);
 };
 
 describe('Проверка создания заказа', () => {
@@ -20,7 +29,7 @@ describe('Проверка создания заказа', () => {
     cy.intercept('GET', '**/api/auth/token', { fixture: 'token.json' });
     cy.intercept('POST', '**/api/orders', { fixture: 'order.json' });
     cy.visit('/');
-    cy.get(`[data-cy='orderButton']`).as('orderButton');
+    cy.get(selectors.orderButton).as('orderButton');
   });
 
   it('проверка отображения верного номера заказа в модальном окне и его закрытие', () => {
@@ -31,18 +40,18 @@ describe('Проверка создания заказа', () => {
       'Говяжий метеорит (отбивная)',
       'Флюоресцентная булка R2-D3'
     );
-    cy.get(`[data-cy='orderButton']`).click();
-    cy.get(`[data-cy='modal']`).should('exist');
-    cy.get(`[data-cy='modal']`).should('contain', '52925');
+    cy.get(selectors.orderButton).click();
+    cy.get(selectors.modal).should('exist');
+    cy.get(selectors.modal).should('contain', '52925');
     cy.document().trigger('keydown', { key: 'Escape' });
-    cy.get(`[data-cy='modal']`).should('not.exist');
+    cy.get(selectors.modal).should('not.exist');
 
-    cy.get(`[data-cy='constructorItems']`).should('exist');
-    cy.get(`[data-cy='constructorItems']`).should(
+    cy.get(selectors.constructorItems).should('exist');
+    cy.get(selectors.constructorItems).should(
       'not.contain',
       'Флюоресцентная булка R2-D3'
     );
-    cy.get(`[data-cy='constructorItems']`).should(
+    cy.get(selectors.constructorItems).should(
       'not.contain',
       'Говяжий метеорит (отбивная)'
     );
@@ -56,7 +65,9 @@ describe('Проверка создания заказа', () => {
 
 describe('Тесты конструктора бургера', () => {
   beforeEach(() => {
-    cy.intercept('GET', '**/api/ingredients/*', { fixture: 'ingredients.json' });
+    cy.intercept('GET', '**/api/ingredients/*', {
+      fixture: 'ingredients.json'
+    });
     cy.visit('/');
     cy.get('li p:nth(3)').as('ingredient');
   });
@@ -79,7 +90,7 @@ describe('Тесты конструктора бургера', () => {
 
   it('закрытие модального окна при клике на оверлей', () => {
     cy.get('@ingredient').click();
-    cy.get(`[data-cy='overlay']`).click('topLeft', { force: true });
+    cy.get(selectors.overlay).click('topLeft', { force: true });
     cy.get('#modals').find('button').should('not.exist');
   });
 
@@ -90,30 +101,28 @@ describe('Тесты конструктора бургера', () => {
       .then((text) => {
         expectedValue = text.trim();
         cy.get('@ingredient').click();
-        cy.get(`[data-cy='modal']`).should(
-          'contain.text',
-          expectedValue
-        );
+        cy.get(selectors.modal).should('contain.text', expectedValue);
       });
   });
 
   it('добавление ингредиентов в конструктор', () => {
     cy.get('ul li button').eq(1).click();
-    cy.get(`[data-cy='bunsTop']`).as('bunsTop');
-    cy.get(`[data-cy='bunsBottom']`).as('bunsBottom');
-    cy.get('ul li button').eq(5).click();
-    cy.get(`[data-cy='constructorItems']`).as('ingredients');
-    cy.get('@bunsTop')
-      .find('span')
-      .contains('Флюоресцентная булка R2-D3')
-      .should('exist');
-    cy.get('@bunsBottom')
-      .find('span')
-      .contains('Флюоресцентная булка R2-D3')
-      .should('exist');
-    cy.get('@ingredients')
-      .find('li')
-      .contains('Говяжий метеорит (отбивная)')
-      .should('exist');
-  });
+  cy.get(selectors.bunsTop).as('bunsTop');
+  cy.get(selectors.bunsBottom).as('bunsBottom');
+  cy.get('ul li button').eq(5).click();
+  cy.get(selectors.constructorItems).as('ingredients');
+
+  cy.get('@bunsTop')
+    .find('span')
+    .contains('Флюоресцентная булка R2-D3')
+    .should('exist');
+  cy.get('@bunsBottom')
+    .find('span')
+    .contains('Флюоресцентная булка R2-D3')
+    .should('exist');
+  cy.get('@ingredients')
+    .find('li')
+    .contains('Говяжий метеорит (отбивная)')
+    .should('exist');
+});
 });
